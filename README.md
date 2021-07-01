@@ -4,7 +4,7 @@ irrelevant unions by the identifying tag literal in input data - it chooses the 
 ### Installation:
 
 ```bash
-npm i io-ts-better-union-error-reporter@0.0.4
+npm i io-ts-better-union-error-reporter
 ```
 
 ### Usage example:
