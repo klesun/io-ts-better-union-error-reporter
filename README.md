@@ -8,8 +8,6 @@ having the most fields covered by the data.
 npm i io-ts-better-union-error-reporter@0.0.2
 ```
 
-Note, since this library is written in typescript, you'll have to whitelist it in your `tsconfig.json`, as `.ts` files located inside `/node_modules/` are excluded by default. If you are using `webpack`, `ts-node`, or something else, you'll have to whitelist `/node_modules/io-ts-better-union-error-reporter` there as well.
-
 ### Usage example:
 ```typescript
 import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/dist/PrettyPrintIoTsErrors";
