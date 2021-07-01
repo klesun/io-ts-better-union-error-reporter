@@ -5,7 +5,7 @@ having the most fields covered by the data.
 ### Installation:
 
 ```bash
-npm i io-ts-better-union-error-reporter@0.0.2
+npm i io-ts-better-union-error-reporter@0.0.4
 ```
 
 ### Usage example:
