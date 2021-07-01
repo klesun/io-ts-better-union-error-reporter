@@ -1,6 +1,6 @@
 A pretty-printer for [io-ts](https://github.com/gcanti/io-ts/issues/350) errors that filters out
 unions that clearly don't match the tag literal in input data - it only includes the union option
-having the most fields covered by the input data.
+having the most fields covered by the data.
 
 ### Installation:
 
