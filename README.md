@@ -4,24 +4,15 @@ having the most fields covered by the data.
 
 ### Installation:
 
-<sub>package.json</sub>
-```json
-{
-  "dependencies": {
-    "io-ts-better-union-error-reporter": "https://github.com/klesun/io-ts-better-union-error-reporter/tarball/ac849be181447176da233ad0dc663ee47df5853f"
-  }
-}
-```
-
 ```bash
-npm i
+npm i io-ts-better-union-error-reporter@0.0.2
 ```
 
 Note, since this library is written in typescript, you'll have to whitelist it in your `tsconfig.json`, as `.ts` files located inside `/node_modules/` are excluded by default. If you are using `webpack`, `ts-node`, or something else, you'll have to whitelist `/node_modules/io-ts-better-union-error-reporter` there as well.
 
 ### Usage example:
 ```typescript
-import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/src/PrettyPrintIoTsErrors";
+import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/dist/PrettyPrintIoTsErrors";
 import * as t from "io-ts";
 
 const someType: t.Decoder<unknown, unknown> = t.type({...});
@@ -34,46 +25,36 @@ if (validated._tag === 'Left') { // decode error
 
 ### Example output:
 ```bash
-[
+array [
   # example with {"kind": "primitive"} supplied as input data
-  at [11] {
+  at [7] object {
     name: string is mandatory
     type: "boolean"|"address"|"integer"|"string"|object|"uint256"|"int256"|string is mandatory
   # example with {} supplied as input data
-  at [12] must be one of
-    {
+  at [11] must satisfy either of
+    | object {
       kind: "function" is mandatory
       inputs: CompilerDataType[] is mandatory
       output: CompilerDataType is mandatory
       id: string is mandatory
       name: string is mandatory
-    {
+    | object {
       name: string is mandatory
       kind: "primitive" is mandatory
       type: "boolean"|"address"|"integer"|"string"|object|"uint256"|"int256"|string is mandatory
-    {
+    | object {
       kind: "struct" is mandatory
       fields: NsFunctionField[] is mandatory
       name: string is mandatory
-    {
+    | object {
       name: string is mandatory
       kind: "table" is mandatory
       fields: Field[] is mandatory
-    invalid 2 IntersectionType element(s)
-      0: {
+    | must satisfy every of
+      & object {
         metadataId: string is mandatory
-      1: UnionType ({ name: string, kind: "primitive", type: (("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ("uint256" | "int256" | string)) } | { name: string, kind: "table", fields: Array<{ name: string, type: ({ kind: "predefinedTypeAlias", id: string } | ("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ({ kind: "function", inputs: Array<CompilerDataType>, output: CompilerDataType } & Partial<{ staticReplacer: (undefined | any) }>) | { kind: "struct", fields: Array<Field> } | { kind: "tuple", parts: Array<CompilerDataType> } | { kind: "table", from: CompilerDataType, to: CompilerDataType } | { kind: "list", of: CompilerDataType }) }> } | { kind: "struct", fields: Array<{ name: string, type: ("boolean" | "address" | "integer" | "string") }>, name: string }) expected
+      & expected one of
+         | { name: string, kind: "primitive", type: (("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ("uint256" | "int256" | string)) }
+         | { name: string, kind: "table", fields: Array<{ name: string, type: ({ kind: "predefinedTypeAlias", id: string } | ("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ({ kind: "function", inputs: Array<CompilerDataType>, output: CompilerDataType } & Partial<{ staticReplacer: (undefined | any) }>) | { kind: "struct", fields: Array<Field> } | { kind: "tuple", parts: Array<CompilerDataType> } | { kind: "table", from: CompilerDataType, to: CompilerDataType } | { kind: "list", of: CompilerDataType }) }> }
+         | { kind: "struct", fields: Array<{ name: string, type: ("boolean" | "address" | "integer" | "string") }>, name: string }
 ```
-
-I'm using this lib with `ts-node`:
-```javascript
-const { register } = require('ts-node');
-
-register({
-    // otherwise it ignores ts files imported from node_modules
-    // add here any other npm libs with source .ts files you are going to import
-    ignore: [/node_modules\/(?!io-ts-better-union-error-reporter\/)/],
-});
-```
-
-Can't guarantee that it will work in other environments.
