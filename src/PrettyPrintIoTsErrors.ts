@@ -5,12 +5,15 @@ import {
   Decoder,
   DictionaryType, Errors,
   InterfaceType,
+  IntersectionType,
   LiteralType, NullType,
   NumberType,
   PartialType, RecursiveType,
   StringType, UnionType,
 } from "io-ts";
 import CollectIoReducedUnionErrorTree, { ErrorTreeNode } from "./CollectIoReducedUnionErrorTree";
+
+const INDENT = '  ';
 
 const getTypeof = (ioType: Decoder<unknown, unknown>) => {
   return (
@@ -47,7 +50,7 @@ const getShortType = (ioType: Decoder<unknown, unknown>): string | null => {
   );
 };
 
-const makeMismatchMessage = (expected: Decoder<unknown, unknown>, actual: unknown): string => {
+const makeMismatchMessage = (expected: Decoder<unknown, unknown>, actual: unknown, level: number): string => {
   const expectedLiteral = expected instanceof LiteralType ? expected.value : null;
   const expectedTypeof = getTypeof(expected);
   const actualTypeof = typeof actual;
@@ -61,6 +64,11 @@ const makeMismatchMessage = (expected: Decoder<unknown, unknown>, actual: unknow
       'null expected, but ' + typeof actual + ' found' :
     expected instanceof RecursiveType && expected.name ?
       expected.name + ' expected' :
+    expected instanceof UnionType ?
+      'expected one of\n' + expected.types
+        .map((t: Decoder<unknown, unknown>) => {
+          return INDENT.repeat(level) + ' | ' + t.name;
+        }).join('\n'):
     (expected as (typeof expected) & {_tag: string})._tag + ' ' + expected.name + ' expected';
 };
 
@@ -71,20 +79,24 @@ const prettyPrintErrorTree = (tree: ErrorTreeNode, parentType?: ContextEntry['ty
     if (!parentType) {
       elementPrefix = '';
     } else if (parentType instanceof UnionType) {
-      elementPrefix = '';
+      elementPrefix = '| ';
+    } else if (parentType instanceof IntersectionType) {
+      elementPrefix = '& ';
     } else if (parentType instanceof ArrayType) {
       elementPrefix = 'at [' + key.key + '] ';
     } else {
       elementPrefix = key.key + ': ';
     }
-    result += '  '.repeat(level) + elementPrefix;
+    result += INDENT.repeat(level) + elementPrefix;
     let containerMessage;
     if (key.type instanceof UnionType) {
-      containerMessage = 'must be one of';
+      containerMessage = 'must satisfy either of';
+    } else if (key.type instanceof IntersectionType) {
+      containerMessage = 'must satisfy every of';
     } else if (key.type instanceof ArrayType) {
-      containerMessage = '[';
+      containerMessage = 'array [';
     } else if (key.type instanceof InterfaceType) {
-      containerMessage = '{';
+      containerMessage = 'object {';
     } else {
       containerMessage = 'invalid ' + subNodes.size + ' ' + (key.type as (typeof key.type) & {_tag: string})._tag + ' element(s)';
     }
@@ -95,7 +107,7 @@ const prettyPrintErrorTree = (tree: ErrorTreeNode, parentType?: ContextEntry['ty
       result += containerMessage + '\n';
       result += prettyPrintErrorTree(subNodes, key.type, level + 1);
     } else {
-      result += makeMismatchMessage(key.type, key.actual) + '\n';
+      result += makeMismatchMessage(key.type, key.actual, level + 1) + '\n';
     }
   }
   return result;
