@@ -64,10 +64,13 @@ const makeMismatchMessage = (expected: Decoder<unknown, unknown>, actual: unknow
       'null expected, but ' + typeof actual + ' found' :
     expected instanceof RecursiveType && expected.name ?
       expected.name + ' expected' :
+    // when io-ts validates an intersection type, it reasonably stops after first unsatisfied intersection
+    // item, resulting in following error entries not having child errors - in such case this message serves
+    // as a hint rather than a source of vital information, so we just truncate lengthy options description
     expected instanceof UnionType ?
       'expected one of\n' + expected.types
         .map((t: Decoder<unknown, unknown>) => {
-          return INDENT.repeat(level) + ' | ' + t.name;
+          return INDENT.repeat(level) + ' | ' + t.name.slice(0, 70) + '...';
         }).join('\n'):
     (expected as (typeof expected) & {_tag: string})._tag + ' ' + expected.name + ' expected';
 };

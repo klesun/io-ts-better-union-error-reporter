@@ -52,7 +52,7 @@ array [
       & object {
         metadataId: string is mandatory
       & expected one of
-         | { name: string, kind: "primitive", type: (("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ("uint256" | "int256" | string)) }
-         | { name: string, kind: "table", fields: Array<{ name: string, type: ({ kind: "predefinedTypeAlias", id: string } | ("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ({ kind: "function", inputs: Array<CompilerDataType>, output: CompilerDataType } & Partial<{ staticReplacer: (undefined | any) }>) | { kind: "struct", fields: Array<Field> } | { kind: "tuple", parts: Array<CompilerDataType> } | { kind: "table", from: CompilerDataType, to: CompilerDataType } | { kind: "list", of: CompilerDataType }) }> }
-         | { kind: "struct", fields: Array<{ name: string, type: ("boolean" | "address" | "integer" | "string") }>, name: string }
+         | { name: string, kind: "primitive", type: (("boolean" | "address" | "in...
+         | { name: string, kind: "table", fields: Array<{ name: string, type: ({ ...
+         | { kind: "struct", fields: Array<{ name: string, type: ("boolean" | "ad...
 ```
