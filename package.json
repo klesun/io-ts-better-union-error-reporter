@@ -5,8 +5,15 @@
     "name": "Artur Klesun",
     "email": "arturklesun@gmail.com"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
+    "fp-ts": "^2.10.5",
     "io-ts": "^2.2.16"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.5"
   },
   "license": "MIT",
   "repository": {
