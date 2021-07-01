@@ -195,12 +195,14 @@ const tryMergeIntersection = (key: ContextEntry, subNodes: ErrorTreeNode): [Cont
 const removeIrrelevantUnionOptionsInNode = (node: ErrorTreeNode): ErrorTreeNode => {
   const newNode: ErrorTreeNode = new Map();
   for (let [key, subNodes] of node) {
+    [key, subNodes] = tryMergeIntersection(key, subNodes);
+    [key, subNodes] = tryReduceMeaninglessWraps(key, subNodes);
+    subNodes = removeIrrelevantUnionOptionsInNode(subNodes);
     if ((key.type instanceof UnionType) && subNodes.size > 1) {
       subNodes = removeIrrelevantUnionOptions(subNodes);
     }
-    [key, subNodes] = tryMergeIntersection(key, subNodes);
     [key, subNodes] = tryReduceMeaninglessWraps(key, subNodes);
-    newNode.set(key, removeIrrelevantUnionOptionsInNode(subNodes));
+    newNode.set(key, subNodes);
   }
   return newNode;
 };
