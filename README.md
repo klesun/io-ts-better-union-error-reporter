@@ -22,7 +22,9 @@ Note, since this library is written in typescript, you'll have to whitelist it i
 ### Usage example:
 ```typescript
 import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/src/PrettyPrintIoTsErrors";
+import * as t from "io-ts";
 
+const someType: t.Decoder<unknown, unknown> = t.type({...});
 const validated = someType.decode(someData);
 if (validated._tag === 'Left') { // decode error
     const message = PrettyPrintIoTsErrors(validated.left);
