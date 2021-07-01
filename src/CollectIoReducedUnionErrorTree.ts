@@ -17,28 +17,39 @@ const collectTree = (e: Errors) => {
   return root;
 };
 
-type KeySummary = {
+type PlainKeySummary = {
   matchingLiterals: number,
   matchingProps: number,
+};
+
+type KeySummary = PlainKeySummary & {
+  isPainType: true,
+} | {
+  isPainType: false,
 };
 
 /**
  * does not include props from complex types, like recursive ones, please try
  * to arrange types to keep distinctive keys outside the function passed to t.recursion()
+ * @return - null if it's a complex type and possible properties are unknown
  */
-const getKnownExpectedProps = (recordType: ContextEntry['type']): Map<string, ContextEntry['type']> => {
+const getKnownExpectedProps = (recordType: ContextEntry['type']): Map<string, ContextEntry['type']> | null => {
   if (recordType instanceof InterfaceType) {
     return new Map(Object.entries(recordType.props));
   } else if (recordType instanceof IntersectionType) {
     const expectedProps = new Map();
     for (const typePart of recordType.types) {
-      for (const [key, valueType] of getKnownExpectedProps(typePart)) {
+      const props = getKnownExpectedProps(typePart);
+      if (!props) {
+        return null; // if at least one part of intersection is impossible to determine, keep option untouched
+      }
+      for (const [key, valueType] of props) {
         expectedProps.set(key, valueType);
       }
     }
     return expectedProps;
   } else {
-    return new Map();
+    return null;
   }
 };
 
@@ -48,6 +59,9 @@ const getKeySummary = (key: ContextEntry): KeySummary => {
   if (key.actual && typeof key.actual === 'object') {
     const actual = key.actual as Record<string, unknown>;
     const expectedProps = getKnownExpectedProps(key.type);
+    if (!expectedProps) {
+      return {isPainType: false};
+    }
     for (const [name, valueType] of expectedProps) {
       if (name in key.actual) {
         ++matchingProps;
@@ -59,10 +73,10 @@ const getKeySummary = (key: ContextEntry): KeySummary => {
       }
     }
   }
-  return { matchingProps, matchingLiterals };
+  return { matchingProps, matchingLiterals, isPainType: true };
 };
 
-const compareSummaries = (a: KeySummary, b: KeySummary) => {
+const compareSummaries = (a: PlainKeySummary, b: PlainKeySummary) => {
   if (a.matchingLiterals !== b.matchingLiterals) {
     return a.matchingLiterals - b.matchingLiterals;
   } else if (a.matchingProps !== b.matchingProps) {
@@ -79,14 +93,15 @@ const removeIrrelevantUnionOptions = (failedOptions: ErrorTreeNode): ErrorTreeNo
     const summary = getKeySummary(failedOption);
     keyToSummary.set(failedOption, summary);
   }
-  // TODO: reduce would be more efficient
-  const entries = [...keyToSummary].sort(([, aSummary], [, bSummary]) => {
-    // greatest first
-    return -compareSummaries(aSummary, bSummary);
-  });
-  const bestSummary = entries[0][1];
+  let bestSummary: PlainKeySummary = {matchingProps: 0, matchingLiterals: 0};
+  for (const [, summary] of keyToSummary) {
+    if (summary.isPainType && compareSummaries(summary, bestSummary) > 0) {
+      bestSummary = summary;
+    }
+  }
   for (const key of failedOptions.keys()) {
-    if (compareSummaries(keyToSummary.get(key)!, bestSummary) < 0) {
+    const summary = keyToSummary.get(key)!;
+    if (summary.isPainType && compareSummaries(summary, bestSummary) < 0) {
       failedOptions.delete(key);
     }
   }
