@@ -8,7 +8,7 @@ having the most fields covered by the input data.
 ```json
 {
   "dependencies": {
-    "io-ts-better-union-error-reporter": soon
+    "io-ts-better-union-error-reporter": "https://github.com/klesun/io-ts-better-union-error-reporter/tarball/ac849be181447176da233ad0dc663ee47df5853f"
   }
 }
 ```
@@ -21,8 +21,7 @@ Note, since this library is written in typescript, you'll have to whitelist it i
 
 ### Usage example:
 ```typescript
-import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/PrettyPrintIoTsErrors";
-import * as t from "io-ts";
+import PrettyPrintIoTsErrors from "io-ts-better-union-error-reporter/src/PrettyPrintIoTsErrors";
 
 const validated = someType.decode(someData);
 if (validated._tag === 'Left') { // decode error
