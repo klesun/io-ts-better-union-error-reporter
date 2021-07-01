@@ -33,9 +33,14 @@ if (validated._tag === 'Left') { // decode error
 ```
 
 ### Example output:
-```
+```bash
 [
-  at [11] must be one of
+  # example with {"kind": "primitive"} supplied as input data
+  at [11] {
+    name: string is mandatory
+    type: "boolean"|"address"|"integer"|"string"|object|"uint256"|"int256"|string is mandatory
+  # example with {} supplied as input data
+  at [12] must be one of
     {
       kind: "function" is mandatory
       inputs: CompilerDataType[] is mandatory
@@ -58,9 +63,6 @@ if (validated._tag === 'Left') { // decode error
       0: {
         metadataId: string is mandatory
       1: UnionType ({ name: string, kind: "primitive", type: (("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ("uint256" | "int256" | string)) } | { name: string, kind: "table", fields: Array<{ name: string, type: ({ kind: "predefinedTypeAlias", id: string } | ("boolean" | "address" | "integer" | "string") | { kind: "address", blockchain: string } | ({ kind: "function", inputs: Array<CompilerDataType>, output: CompilerDataType } & Partial<{ staticReplacer: (undefined | any) }>) | { kind: "struct", fields: Array<Field> } | { kind: "tuple", parts: Array<CompilerDataType> } | { kind: "table", from: CompilerDataType, to: CompilerDataType } | { kind: "list", of: CompilerDataType }) }> } | { kind: "struct", fields: Array<{ name: string, type: ("boolean" | "address" | "integer" | "string") }>, name: string }) expected
-  at [12] {
-    name: string is mandatory
-    type: "boolean"|"address"|"integer"|"string"|object|"uint256"|"int256"|string is mandatory
 ```
 
 I'm using this lib with `ts-node`:
