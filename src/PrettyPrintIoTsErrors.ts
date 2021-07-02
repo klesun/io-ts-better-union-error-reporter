@@ -11,26 +11,9 @@ import {
   PartialType, RecursiveType,
   StringType, UnionType,
 } from "io-ts";
-import CollectIoReducedUnionErrorTree, { ErrorTreeNode } from "./CollectIoReducedUnionErrorTree";
+import CollectIoReducedUnionErrorTree, { ErrorTreeNode, getTypeof } from "./CollectIoReducedUnionErrorTree";
 
 const INDENT = '  ';
-
-const getTypeof = (ioType: Decoder<unknown, unknown>) => {
-  return (
-    ioType instanceof InterfaceType ||
-    ioType instanceof PartialType ||
-    ioType instanceof DictionaryType
-      ? 'object' :
-    ioType instanceof LiteralType ||
-    ioType instanceof StringType
-      ? 'string' :
-    ioType instanceof NumberType
-      ? 'number' :
-    ioType instanceof BooleanType
-      ? 'boolean' :
-    null
-  );
-};
 
 const getShortType = (ioType: Decoder<unknown, unknown>): string | null => {
   return (
@@ -100,6 +83,8 @@ const prettyPrintErrorTree = (tree: ErrorTreeNode, parentType?: ContextEntry['ty
       containerMessage = 'array [';
     } else if (key.type instanceof InterfaceType) {
       containerMessage = 'object {';
+    } else if (key.type instanceof RecursiveType) {
+      containerMessage = key.type.name + ' {';
     } else {
       containerMessage = 'invalid ' + subNodes.size + ' ' + (key.type as (typeof key.type) & {_tag: string})._tag + ' element(s)';
     }

@@ -1,4 +1,8 @@
-import { Any, ContextEntry, Decoder, Errors, InterfaceType, intersection, IntersectionType, LiteralType,
+import { Any,
+  BooleanType, ContextEntry, Decoder, DictionaryType, Errors, InterfaceType, intersection, IntersectionType, LiteralType,
+  NumberType,
+  PartialType,
+  StringType,
   type, UnionType } from "io-ts";
 
 export type ErrorTreeNode = Map<ContextEntry, ErrorTreeNode>;
@@ -23,9 +27,28 @@ type PlainKeySummary = {
 };
 
 type KeySummary = PlainKeySummary & {
-  isPainType: true,
+  interactionKind: 'REDUCE',
 } | {
-  isPainType: false,
+  interactionKind: 'KEEP',
+} | {
+  interactionKind: 'EXCLUDE',
+};
+
+export const getTypeof = (ioType: Decoder<unknown, unknown>) => {
+  return (
+    ioType instanceof InterfaceType ||
+    ioType instanceof PartialType ||
+    ioType instanceof DictionaryType
+      ? 'object' :
+    ioType instanceof LiteralType ||
+    ioType instanceof StringType
+      ? 'string' :
+    ioType instanceof NumberType
+      ? 'number' :
+    ioType instanceof BooleanType
+      ? 'boolean' :
+    null
+  );
 };
 
 /**
@@ -60,7 +83,7 @@ const getKeySummary = (key: ContextEntry): KeySummary => {
     const actual = key.actual as Record<string, unknown>;
     const expectedProps = getKnownExpectedProps(key.type);
     if (!expectedProps) {
-      return {isPainType: false};
+      return {interactionKind: 'KEEP'};
     }
     for (const [name, valueType] of expectedProps) {
       if (name in key.actual) {
@@ -73,7 +96,7 @@ const getKeySummary = (key: ContextEntry): KeySummary => {
       }
     }
   }
-  return { matchingProps, matchingLiterals, isPainType: true };
+  return { matchingProps, matchingLiterals, interactionKind: 'REDUCE' };
 };
 
 const compareSummaries = (a: PlainKeySummary, b: PlainKeySummary) => {
@@ -87,21 +110,28 @@ const compareSummaries = (a: PlainKeySummary, b: PlainKeySummary) => {
 };
 
 /** if there are options with higher amount of matching non-optional literals/keys, remove all other options */
-const removeIrrelevantUnionOptions = (failedOptions: ErrorTreeNode): ErrorTreeNode => {
+const removeIrrelevantUnionOptions = (key: ContextEntry, failedOptions: ErrorTreeNode): ErrorTreeNode => {
+  const actualTypeof = typeof key.actual;
+  const hasExpectedTypeof = [...failedOptions.keys()]
+    .some(k => getTypeof(k.type) === actualTypeof);
   const keyToSummary = new Map<ContextEntry, KeySummary>();
   for (const failedOption of failedOptions.keys()) {
-    const summary = getKeySummary(failedOption);
+    const expectedTypeof = getTypeof(failedOption.type);
+    const summary: KeySummary = !hasExpectedTypeof || expectedTypeof === actualTypeof || !expectedTypeof
+      ? getKeySummary(failedOption) : {interactionKind: 'EXCLUDE'};
     keyToSummary.set(failedOption, summary);
   }
   let bestSummary: PlainKeySummary = {matchingProps: 0, matchingLiterals: 0};
   for (const [, summary] of keyToSummary) {
-    if (summary.isPainType && compareSummaries(summary, bestSummary) > 0) {
+    if (summary.interactionKind === 'REDUCE' && compareSummaries(summary, bestSummary) > 0) {
       bestSummary = summary;
     }
   }
   for (const key of failedOptions.keys()) {
     const summary = keyToSummary.get(key)!;
-    if (summary.isPainType && compareSummaries(summary, bestSummary) < 0) {
+    if (summary.interactionKind === 'REDUCE' && compareSummaries(summary, bestSummary) < 0 ||
+        summary.interactionKind === 'EXCLUDE'
+    ) {
       failedOptions.delete(key);
     }
   }
@@ -199,7 +229,7 @@ const removeIrrelevantUnionOptionsInNode = (node: ErrorTreeNode): ErrorTreeNode 
     [key, subNodes] = tryReduceMeaninglessWraps(key, subNodes);
     subNodes = removeIrrelevantUnionOptionsInNode(subNodes);
     if ((key.type instanceof UnionType) && subNodes.size > 1) {
-      subNodes = removeIrrelevantUnionOptions(subNodes);
+      subNodes = removeIrrelevantUnionOptions(key, subNodes);
     }
     [key, subNodes] = tryReduceMeaninglessWraps(key, subNodes);
     newNode.set(key, subNodes);
